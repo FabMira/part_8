@@ -11,10 +11,10 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "test",
-    "dev": "vite"
+    "test": "test"
   },
   "dependencies": {
+    "@apollo/server": "^5.0.0",
     "apollo-server": "^3.13.0",
     "graphql": "^16.11.0"
   }
