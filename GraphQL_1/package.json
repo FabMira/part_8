@@ -1,0 +1,21 @@
+{
+  "name": "graphql_1",
+  "version": "1.0.0",
+  "description": "graphql practice for fullstack_course",
+  "repository": {
+    "type": "git",
+    "url": "fullstack_course_p8"
+  },
+  "license": "ISC",
+  "author": "Fabrizio Mirabella",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "apollo-server": "^3.13.0",
+    "graphql": "^16.11.0"
+  }
+}
