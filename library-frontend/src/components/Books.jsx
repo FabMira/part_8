@@ -1,9 +1,32 @@
+/* eslint-disable react/prop-types */
+import { gql, useQuery } from "@apollo/client";
+
+const ALL_BOOKS = gql`
+  query AllBooks {
+    allBooks {
+      author
+      published
+      title
+    }
+  }
+`;
+
 const Books = (props) => {
+  const result = useQuery(ALL_BOOKS);
+
   if (!props.show) {
-    return null
+    return null;
   }
 
-  const books = []
+  if (result.loading) {
+    return (
+      <div>
+        <h2>Loading...</h2>
+      </div>
+    );
+  }
+
+  const books = result.data.allBooks;
 
   return (
     <div>
@@ -26,7 +49,7 @@ const Books = (props) => {
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};
 
-export default Books
+export default Books;

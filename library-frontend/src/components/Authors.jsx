@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { gql, useQuery } from "@apollo/client";
 
 const ALL_AUTHORS = gql`
@@ -11,12 +12,11 @@ const ALL_AUTHORS = gql`
 `;
 
 const Authors = (props) => {
+  const result = useQuery(ALL_AUTHORS);
+
   if (!props.show) {
     return null;
   }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const result = useQuery(ALL_AUTHORS);
 
   if (result.loading) {
     return <div>loading...</div>;
