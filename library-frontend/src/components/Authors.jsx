@@ -1,15 +1,6 @@
 /* eslint-disable react/prop-types */
-import { gql, useQuery } from "@apollo/client";
-
-const ALL_AUTHORS = gql`
-  query AllAuthors {
-    allAuthors {
-      name
-      born
-      bookCount
-    }
-  }
-`;
+import { useQuery } from "@apollo/client";
+import { ALL_AUTHORS } from "../queries/queries";
 
 const Authors = (props) => {
   const result = useQuery(ALL_AUTHORS);
