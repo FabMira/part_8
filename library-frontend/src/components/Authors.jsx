@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useQuery, useMutation } from "@apollo/client";
 import { ALL_AUTHORS, UPDATE_AUTHOR } from "../queries/queries";
-import { useState } from "react";
+import React, { useState } from "react";
+import Select from "react-select";
 
 const Authors = (props) => {
   const result = useQuery(ALL_AUTHORS);
-  const [author, setAuthor] = useState("");
+  const [author, setAuthor] = useState(null);
   const [born, setBorn] = useState("");
   const [updateAuthor] = useMutation(UPDATE_AUTHOR, {
     refetchQueries: [{ query: ALL_AUTHORS }],
@@ -20,12 +21,15 @@ const Authors = (props) => {
   }
 
   const authors = result.data.allAuthors;
+  const options = authors.map((author) => ({
+    value: author.name,
+    label: author.name,
+  }));
 
   const submit = async (event) => {
     event.preventDefault();
-
     updateAuthor({
-      variables: { name: author, setBornTo: Number(born) },
+      variables: { name: author.value, setBornTo: Number(born) },
     });
 
     setBorn("");
@@ -52,20 +56,8 @@ const Authors = (props) => {
         </tbody>
       </table>
       <h2>Set birthyear</h2>
+      <Select defaultValue={author} onChange={setAuthor} options={options} />
       <form onSubmit={submit}>
-        <label htmlFor="author">name:</label>
-        <select
-          name="author"
-          id="author"
-          onChange={({ target }) => setAuthor(target.value)}
-        >
-          <option value="">Select an author</option>
-          {authors.map((a) => (
-            <option key={a.name} value={a.name}>
-              {a.name}
-            </option>
-          ))}
-        </select>
         <input value={born} onChange={({ target }) => setBorn(target.value)} />
         <button type="submit">update author</button>
       </form>
