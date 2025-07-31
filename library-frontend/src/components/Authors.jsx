@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useQuery, useMutation } from "@apollo/client";
 import { ALL_AUTHORS, UPDATE_AUTHOR } from "../queries/queries";
-import React, { useState } from "react";
+import { useState } from "react";
 import Select from "react-select";
 
 const Authors = (props) => {
