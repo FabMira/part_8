@@ -153,22 +153,30 @@ const resolvers = {
   Query: {
     bookCount: async () => await Book.countDocuments(),
     authorCount: async () => await Author.countDocuments(),
-    allBooks: async () => {
-      const books = await Book.find({});
+    allBooks: async (root, args) => {
+      let query = {};
+      if (args.genre) {
+        query.genres = { $in: [args.genre] };
+      }
+      const books = await Book.find(query).populate("author");
       return books.map((book) => ({
         title: book.title,
         published: book.published,
-        author: book.author.name,
+        author: book.author,
+        id: book.id,
+        genres: book.genres,
       }));
     },
     allAuthors: async () => {
       const authors = await Author.find({});
       const books = await Book.find({});
-      return authors.map((author) => ({
-        name: author.name,
-        born: author.born,
-        bookCount: books.filter((book) => book.author === author.name).length,
-      }));
+      return Promise.all(
+        authors.map(async (author) => ({
+          name: author.name,
+          born: author.born,
+          bookCount: await Book.countDocuments({ author: author._id }),
+        }))
+      );
     },
   },
   Mutation: {
@@ -195,14 +203,22 @@ const resolvers = {
       }
       return book.populate("author");
     },
-    editAuthor: (root, args) => {
-      const author = authors.find((a) => a.name === args.name);
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name });
       if (!author) {
         return null;
       }
-      const updateAuthor = { ...author, born: args.setBornTo };
-      authors = authors.map((a) => (a.name === args.name ? updateAuthor : a));
-      return updateAuthor;
+      author.born = args.setBornTo;
+      try {
+        await author.save();
+      } catch (error) {
+        throw new Error(`Updating author failed: ${error.message}`);
+      }
+      return {
+        name: author.name,
+        born: author.born,
+        bookCount: await Book.countDocuments({ author: author._id }),
+      };
     },
   },
 };
