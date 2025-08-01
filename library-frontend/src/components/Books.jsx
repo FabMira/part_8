@@ -3,7 +3,14 @@ import { useQuery } from "@apollo/client";
 import { ALL_BOOKS } from "../queries/queries";
 
 const Books = (props) => {
-  const result = useQuery(ALL_BOOKS);
+  const result = useQuery(ALL_BOOKS, {
+    onError: (error) => {
+      props.setMessage(error.message);
+      setTimeout(() => {
+        props.setMessage(null);
+      }, 5000);
+    },
+  });
 
   if (!props.show) {
     return null;

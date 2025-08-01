@@ -10,6 +10,12 @@ const Authors = (props) => {
   const [born, setBorn] = useState("");
   const [updateAuthor] = useMutation(UPDATE_AUTHOR, {
     refetchQueries: [{ query: ALL_AUTHORS }],
+    onError: (error) => {
+      props.setMessage(error.message);
+      setTimeout(() => {
+        props.setMessage(null);
+      }, 5000);
+    },
   });
 
   if (!props.show) {
