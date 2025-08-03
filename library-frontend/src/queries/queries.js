@@ -64,3 +64,12 @@ export const LOGIN = gql`
     }
   }
 `;
+
+export const USER = gql`
+  query Me {
+    me {
+      username
+      favoriteGenre
+    }
+  }
+`;
