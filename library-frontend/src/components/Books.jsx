@@ -1,11 +1,14 @@
 /* eslint-disable react/prop-types */
 import { useQuery } from "@apollo/client";
 import { ALL_BOOKS } from "../queries/queries";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Books = (props) => {
-  const [genre, setGenre] = useState("all");
+  const [genre, setGenre] = useState(null);
+  const [allGenres, setAllGenres] = useState([]);
+
   const result = useQuery(ALL_BOOKS, {
+    variables: { author: null, genre: genre },
     onError: (error) => {
       props.setMessage(error.message);
       setTimeout(() => {
@@ -13,6 +16,14 @@ const Books = (props) => {
       }, 5000);
     },
   });
+
+  useEffect(() => {
+    if (result.data && !result.loading && allGenres.length < 1) {
+      const books = result.data.allBooks;
+      const genres = [...new Set(books.map((b) => b.genres).flat())];
+      setAllGenres(genres);
+    }
+  }, [result.data, result.loading, allGenres]);
 
   if (!props.show) {
     return null;
@@ -26,12 +37,7 @@ const Books = (props) => {
     );
   }
 
-  const books = result.data.allBooks;
-  const genres = [...new Set(books.map((b) => b.genres).flat())];
-  const filteredBooks =
-    genre === "all"
-      ? books
-      : books.filter((book) => book.genres.includes(genre));
+  const filteredBooks = result.data?.allBooks || [];
 
   return (
     <div>
@@ -55,10 +61,10 @@ const Books = (props) => {
           ))}
         </tbody>
       </table>
-      <button style={{ marginRight: 10 }} onClick={() => setGenre("all")}>
+      <button style={{ marginRight: 10 }} onClick={() => setGenre(null)}>
         all
       </button>
-      {genres.map((g) => (
+      {allGenres.map((g) => (
         <button style={{ marginRight: 10 }} key={g} onClick={() => setGenre(g)}>
           {g}
         </button>

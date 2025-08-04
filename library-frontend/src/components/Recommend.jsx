@@ -1,10 +1,14 @@
 /* eslint-disable react/prop-types */
 import { useQuery } from "@apollo/client";
 import { ALL_BOOKS, USER } from "../queries/queries";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const Books = (props) => {
+  const [favoriteGenre, setFavoriteGenre] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+
   const loggedUser = useQuery(USER, {
+    skip: !props.token,
     onError: (error) => {
       props.setMessage(error.message);
       setTimeout(() => {
@@ -12,7 +16,10 @@ const Books = (props) => {
       }, 5000);
     },
   });
+
   const result = useQuery(ALL_BOOKS, {
+    variables: { author: null, genre: favoriteGenre },
+    skip: !favoriteGenre,
     onError: (error) => {
       props.setMessage(error.message);
       setTimeout(() => {
@@ -22,13 +29,15 @@ const Books = (props) => {
   });
 
   useEffect(() => {
-    const newToken = localStorage.getItem("booklist-user-token");
-    if (newToken !== props.token) {
-      loggedUser.refetch();
-    } else if (props.token !== null && loggedUser.data.me === null) {
-      loggedUser.refetch();
+    if (loggedUser.data && !loggedUser.loading) {
+      const userFavGenre = loggedUser.data.me.favoriteGenre;
+      setFavoriteGenre(userFavGenre);
     }
-  }, [loggedUser, props.token]);
+    if (result.data && !result.loading) {
+      const books = result.data.allBooks;
+      setRecommendations(books);
+    }
+  }, [loggedUser.data, loggedUser.loading, result.data, result.loading]);
 
   if (!props.show) {
     return null;
@@ -42,22 +51,12 @@ const Books = (props) => {
     );
   }
 
-  if (!loggedUser.data?.me) {
-    return <div>por favor inicia sesion</div>;
-  }
-
-  const userFavoriteGenre = loggedUser.data.me.favoriteGenre;
-  const books = result.data.allBooks;
-  const filteredBooks = books.filter((book) =>
-    book.genres.includes(userFavoriteGenre)
-  );
-
   return (
     <div>
       <h2>recommendations</h2>
       <p>
         books in your favorite genre{" "}
-        <span style={{ fontWeight: "bold" }}>{userFavoriteGenre}</span>
+        <span style={{ fontWeight: "bold" }}>{favoriteGenre}</span>
       </p>
       <table>
         <tbody>
@@ -66,7 +65,7 @@ const Books = (props) => {
             <th>author</th>
             <th>published</th>
           </tr>
-          {filteredBooks.map((a) => (
+          {recommendations.map((a) => (
             <tr key={a.title}>
               <td>{a.title}</td>
               <td>{a.author.name}</td>
