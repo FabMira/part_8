@@ -18,10 +18,16 @@ const Books = (props) => {
   });
 
   useEffect(() => {
-    if (result.data && !result.loading && allGenres.length < 1) {
+    if (result.data && !result.loading) {
       const books = result.data.allBooks;
       const genres = [...new Set(books.map((b) => b.genres).flat())];
-      setAllGenres(genres);
+      console.log(
+        `all genres: ${allGenres.length} and genres: ${genres.length}`
+      );
+
+      if (allGenres.length < 1 || allGenres.length < genres.length) {
+        setAllGenres(genres);
+      }
     }
   }, [result.data, result.loading, allGenres]);
 
@@ -43,7 +49,10 @@ const Books = (props) => {
     <div>
       <h2>books</h2>
       <p>
-        in genre <span style={{ fontWeight: "bold" }}>{genre}</span>
+        in genre{" "}
+        <span style={{ fontWeight: "bold" }}>
+          {genre === null ? "all" : genre}
+        </span>
       </p>
       <table>
         <tbody>
