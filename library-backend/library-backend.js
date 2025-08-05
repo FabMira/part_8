@@ -1,7 +1,13 @@
-const { ApolloServer } = require("@apollo/server");
-const { startStandaloneServer } = require("@apollo/server/standalone");
+const { ApolloServer } = require("apollo-server-express");
+const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
+const { createServer } = require("http");
+const express = require("express");
+const { WebSocketServer } = require("ws");
+const { useServer } = require("graphql-ws/lib/use/ws");
+const { makeExecutableSchema } = require("@graphql-tools/schema");
 const { v1: uuid } = require("uuid");
 const { GraphQLError } = require("graphql");
+const { PubSub } = require("graphql-subscriptions");
 
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
@@ -9,6 +15,7 @@ const Book = require("./models/book_schema");
 const Author = require("./models/author_schema");
 const User = require("./models/user_schema");
 const jwt = require("jsonwebtoken");
+const pubsub = new PubSub();
 
 require("dotenv").config();
 
@@ -72,6 +79,10 @@ const typeDefs = `
       username: String!
       password: String!
     ): Token
+  }
+
+  type Subscription {
+    bookAdded: Book!
   }
 `;
 
@@ -152,6 +163,7 @@ const resolvers = {
           extensions: { code: "BOOK_SAVING_FAILURE" },
         });
       }
+      pubsub.publish("BOOK_ADDED", { bookAdded: book.populate("author") });
       return book.populate("author");
     },
     editAuthor: async (root, args, context) => {
@@ -214,26 +226,88 @@ const resolvers = {
       return { value: jwt.sign(userForToken, process.env.JWT_SECRET) };
     },
   },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(["BOOK_ADDED"]),
+    },
+  },
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const app = express();
+const httpServer = createServer(app);
+
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: "/graphql",
 });
 
-startStandaloneServer(server, {
-  listen: { port: 4000 },
-  context: async ({ req, res }) => {
+useServer(
+  {
+    schema,
+    context: async (ctx) => {
+      const { connectionParams } = ctx;
+      console.log("Websocket connection attempt:", connectionParams);
+
+      const auth = connectionParams.authorization || null;
+      if (auth && auth.startsWith("Bearer ")) {
+        const decodedToken = jwt.verify(
+          auth.substring(7),
+          process.env.JWT_SECRET
+        );
+        const currentUser = await User.findById(decodedToken.id);
+        return { currentUser };
+      }
+      return {};
+    },
+  },
+  wsServer
+);
+
+const server = new ApolloServer({
+  schema,
+  context: async ({ req }) => {
+    // Manejo del contexto para solicitudes HTTP
     const auth = req ? req.headers.authorization : null;
     if (auth && auth.startsWith("Bearer ")) {
-      const decodedToken = jwt.verify(
-        auth.substring(7),
-        process.env.JWT_SECRET
-      );
-      const currentUser = await User.findById(decodedToken.id);
-      return { currentUser };
+      try {
+        const decodedToken = jwt.verify(
+          auth.substring(7),
+          process.env.JWT_SECRET
+        );
+        const currentUser = await User.findById(decodedToken.id);
+        return { currentUser };
+      } catch (error) {
+        console.error("Error verifying token:", error);
+        return {};
+      }
     }
+    return {};
   },
-}).then(({ url }) => {
-  console.log(`Server ready at ${url}`);
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await wsServer.close();
+          },
+        };
+      },
+    },
+  ],
+});
+
+const PORT = 4000;
+server.start().then(() => {
+  server.applyMiddleware({ app, path: "/graphql" });
+  httpServer.listen(PORT, () => {
+    console.log(
+      `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
+    );
+    console.log(
+      `🚀 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`
+    );
+  });
 });
