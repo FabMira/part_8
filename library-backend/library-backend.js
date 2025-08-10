@@ -16,6 +16,7 @@ const Author = require("./models/author_schema");
 const User = require("./models/user_schema");
 const jwt = require("jsonwebtoken");
 const pubsub = new PubSub();
+const cors = require("cors");
 
 require("dotenv").config();
 
@@ -236,11 +237,22 @@ const resolvers = {
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Cambia a tu origen del frontend
+    credentials: true, // Permite enviar cookies o encabezados de autenticación
+    methods: ["GET", "POST", "OPTIONS"], // Métodos permitidos
+    allowedHeaders: ["Content-Type", "Authorization"], // Encabezados permitidos
+  })
+);
+
 const httpServer = createServer(app);
 
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: "/graphql",
+  subprotocol: "graphql-ws",
 });
 
 useServer(
@@ -248,16 +260,16 @@ useServer(
     schema,
     context: async (ctx) => {
       const { connectionParams } = ctx;
-      console.log("Websocket connection attempt:", connectionParams);
-
-      const auth = connectionParams.authorization || null;
-      if (auth && auth.startsWith("Bearer ")) {
-        const decodedToken = jwt.verify(
-          auth.substring(7),
-          process.env.JWT_SECRET
-        );
-        const currentUser = await User.findById(decodedToken.id);
-        return { currentUser };
+      if (connectionParams?.authorization) {
+        const token = connectionParams.authorization.replace("Bearer ", "");
+        try {
+          const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+          const currentUser = await User.findById(decodedToken.id);
+          return { currentUser };
+        } catch (error) {
+          console.error("WebSocket context - auth error:", error.message);
+          return {};
+        }
       }
       return {};
     },
@@ -288,10 +300,10 @@ const server = new ApolloServer({
   plugins: [
     ApolloServerPluginDrainHttpServer({ httpServer }),
     {
-      async serverWillStart() {
+      serverWillStart() {
         return {
-          async drainServer() {
-            await wsServer.close();
+          drainServer() {
+            wsServer.close();
           },
         };
       },

@@ -21,10 +21,6 @@ const Books = (props) => {
     if (result.data && !result.loading) {
       const books = result.data.allBooks;
       const genres = [...new Set(books.map((b) => b.genres).flat())];
-      console.log(
-        `all genres: ${allGenres.length} and genres: ${genres.length}`
-      );
-
       if (allGenres.length < 1 || allGenres.length < genres.length) {
         setAllGenres(genres);
       }

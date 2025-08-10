@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@apollo/client": "^3.13.8",
+    "@apollo/client": "^3.13.9",
     "graphql": "^16.11.0",
+    "graphql-ws": "^6.0.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-select": "^5.10.2"
+    "react-select": "^5.10.2",
+    "subscriptions-transport-ws": "^0.11.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

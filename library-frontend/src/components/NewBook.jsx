@@ -22,11 +22,11 @@ const NewBook = (props) => {
       );
     },
     onError: (error) => {
-      console.log(error.message);
-
       props.setMessage(error.message);
+      props.setNotifClass("error");
       setTimeout(() => {
         props.setMessage(null);
+        props.setNotifClass("notification");
       }, 5000);
     },
   });
