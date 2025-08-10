@@ -108,13 +108,16 @@ const resolvers = {
     allAuthors: async () => {
       const authors = await Author.find({});
       const books = await Book.find({});
-      return Promise.all(
-        authors.map(async (author) => ({
-          name: author.name,
-          born: author.born,
-          bookCount: await Book.countDocuments({ author: author._id }),
-        }))
-      );
+      const bookCounts = books.reduce((acc, book) => {
+        const authorId = book.author.toString();
+        acc[authorId] = (acc[authorId] || 0) + 1;
+        return acc;
+      }, {});
+      return authors.map(async (author) => ({
+        name: author.name,
+        born: author.born,
+        bookCount: bookCounts[author._id.toString()] || 0,
+      }));
     },
     me: (root, args, context) => {
       return context.currentUser;
