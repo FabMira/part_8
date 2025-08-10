@@ -1,0 +1,20 @@
+.notification {
+  border: solid;
+  border-width: 2;
+  border-radius: 5;
+  border-color: green;
+  background-color: lightgreen;
+  color: green;
+  margin: 10px;
+  padding: 5px;
+}
+.error {
+  border: solid;
+  border-width: 2;
+  border-radius: 5;
+  border-color: lightyellow;
+  background-color: red;
+  color: whitesmoke;
+  margin: 10px;
+  padding: 5px;
+}
