@@ -240,7 +240,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Cambia a tu origen del frontend
+    origin: "*", // Cambia a tu origen del frontend
     credentials: true, // Permite enviar cookies o encabezados de autenticación
     methods: ["GET", "POST", "OPTIONS"], // Métodos permitidos
     allowedHeaders: ["Content-Type", "Authorization"], // Encabezados permitidos
@@ -314,7 +314,7 @@ const server = new ApolloServer({
 const PORT = 4000;
 server.start().then(() => {
   server.applyMiddleware({ app, path: "/graphql" });
-  httpServer.listen(PORT, () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(
       `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
     );

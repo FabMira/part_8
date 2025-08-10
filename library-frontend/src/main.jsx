@@ -24,12 +24,12 @@ const authLink = setContext((_, { headers }) => {
 });
 
 const httpLink = createHttpLink({
-  uri: "http://localhost:4000/graphql",
+  uri: "http://192.168.137.113:4000/graphql",
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: `ws://localhost:4000/graphql`,
+    url: `ws://192.168.137.113:4000/graphql`,
     connectionParams: () => {
       const token = localStorage.getItem("booklist-user-token");
       return {

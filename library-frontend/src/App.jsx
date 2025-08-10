@@ -6,7 +6,7 @@ import LoginForm from "./components/LoginForm";
 import Notify from "./components/Notify";
 import Recommend from "./components/Recommend";
 import { useApolloClient, useSubscription } from "@apollo/client";
-import { BOOK_ADDED } from "./queries/queries";
+import { ALL_BOOKS, BOOK_ADDED } from "./queries/queries";
 
 const App = () => {
   const [page, setPage] = useState("authors");
@@ -39,12 +39,14 @@ const App = () => {
       }, 5000);
     },
     onData: ({ data }) => {
-      console.log(data.data.bookAdded);
       const bookAdded = data.data.bookAdded;
       setMessage(
         `New book added: ${bookAdded.title} by ${bookAdded.author.name}`
       );
       if (notifClass !== "notification") setNotifClass("notification");
+      client.refetchQueries({
+        include: [ALL_BOOKS],
+      });
       setTimeout(() => {
         setMessage(null);
       }, 5000);
